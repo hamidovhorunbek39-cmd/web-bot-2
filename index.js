@@ -215,7 +215,7 @@ function getAiResponse(text) {
 }
 
 // ----------------------------------------------------
-// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - MUSTAHKAMLANGAN
+// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - Xato tuzatilgan
 // ----------------------------------------------------
 const USER_IDS_FILE = "user_ids.json";
 let userIds = new Set();
@@ -233,7 +233,7 @@ function loadUserIds() {
         const parsedData = JSON.parse(data);
         if (!Array.isArray(parsedData)) {
           throw new Error("JSON Array emas");
-        }
+        } // ID larni String sifatida saqlash (bu node-telegram-bot-api ID larini string qabul qilganini hisobga oladi)
         return new Set(parsedData.map(String));
       } catch (jsonError) {
         console.error(
@@ -265,7 +265,9 @@ function saveUserIds(userIds) {
   }
 }
 
-// XATO ANIQLANGAN JOY. Bu qator endi ishlaydi.
+// ----------------------------------------------------
+// !!! MUHIM JOY: XATO TUZATILGAN QATOR !!!
+// ----------------------------------------------------
 userIds = loadUserIds();
 console.log(`Bot ishga tushdi. Yuklangan foydalanuvchilar: ${userIds.size}`);
 

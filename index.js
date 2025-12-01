@@ -4,7 +4,7 @@
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
-const path = require("path");
+// const path = require("path"); // path kutubxonasi ishlatilmagani uchun olib tashlandi.
 
 // 2. Token va Admin ID
 // !!! DIQQAT: Token va ADMIN_CHAT_ID o'zgartirilishi kerak!
@@ -103,7 +103,7 @@ const ADS_DATA = [
 ];
 
 // ----------------------------------------------------
-// TAYYOR AI JAVOBLAR LUG'ATI (50+ savol-javob)
+// TAYYOR AI JAVOBLAR LUG'ATI (50+ savol-javob) - YANGI QO'SHILGAN QISM
 // ----------------------------------------------------
 const AI_RESPONSES = {
   // === SALOMLASHISH VA ILK SAVOLLAR ===
@@ -111,14 +111,12 @@ const AI_RESPONSES = {
     "Va alaykum assalom! Botimizga xush kelibsiz. Qanday yordam bera olaman? 😊",
   "assalomu alaykum":
     "Va alaykum assalom! Xizmatingizga tayyorman. Savolingizni yuboring.",
-  "xayrli tong": "Sizga ham xayrli tong! Buguningiz omadli kelsin.",
-  "xayrli kun": "Xayrli kun! Qanday savol bilan murojaat qildingiz?",
   qalesiz: "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
   yaxshimisiz: "Rahmat, yaxshiman! Sizga qanday yordam bera olaman?",
   "kim siz":
     "Men Telegram botiman, Ma'muriyat va foydalanuvchilar o'rtasidagi asosiy vositachiman.",
   "nima qilasiz":
-    "Men oddiy xabarlarni Adminga uzataman, Admindan kelgan xabarlarni tarqataman va ba'zi savollarga avtomatik javob beraman.",
+    "Men oddiy xabarlarni Adminga uzataman va ba'zi savollarga avtomatik javob beraman.",
   "yordam kerak":
     "Albatta, qanday masala bo'yicha yordam kerak? Savolingizni to'liqroq yozing, Adminga yetkazaman.",
 
@@ -126,96 +124,39 @@ const AI_RESPONSES = {
   "ish vaqti":
     "Bizning ish vaqtimiz har kuni ertalab 9:00 dan kechki 18:00 gacha (Uzbekiston vaqti bilan).",
   manzil:
-    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi. Biz Toshkent shahrida joylashganmiz.",
-  ofis: "Ofisimizning joylashuvini aniqlash uchun Adminga aniq so'rov yuboring.",
+    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi.",
   narxlar:
     "Narxlar haqida bilish uchun aniq mahsulot yoki xizmat nomini yozing, ma'muriyatga uzataman.",
   "to'lov usullari":
     "Plastik karta (Uzcard/Humo), Click yoki Payme orqali to'lovlarni qabul qilamiz.",
   aksiya:
     "Hozirda qaysi mahsulotlar bo'yicha aksiyalar borligini Admindan so'rang.",
-  chegirma:
-    "Eng so'nggi chegirmalar haqida ma'lumot olish uchun 'chegirmalar' so'zini yozing, Adminga uzataman.",
-  "qanday kurslar":
-    "Biz dasturlash, dizayn va til kurslarini taklif qilamiz. Batafsil ma'lumotni Adminga uzataman.",
-  "boshqa savol":
-    "Agar boshqa savolingiz bo'lsa, bemalol yozing. Adminga yuborilishini tekshiraman.",
-  "qanaqa xizmatlar":
-    "Biz keng turdagi xizmatlarni taklif etamiz. Savolingizni aniqlashtiring, iltimos.",
-
-  // === TEXNIK SAVOLLAR ===
-  "bot ishlayaptimi":
-    "Ha, men ayni damda ishlayapman va xabarlaringizni qabul qilishga tayyorman.",
-  "token nima":
-    "Token - bu botni boshqarish uchun kerak bo'ladigan maxfiy kalit. Uni tarqatmang!",
-  "bot yaratish":
-    "Bot yaratish xizmati bo'yicha Adminga murojaat qiling, ular sizga yordam berishadi.",
-  "chat id":
-    "Sizning Chat ID'ingizni Ma'muriyat xabarlaringizni yuborganda ko'radi.",
-  "bot qanday yasalgan":
-    "Men Node.js va node-telegram-bot-api kutubxonasida yasalganman.",
 
   // === XAYRLASHISH VA MINNATDORCHILIK ===
   raxmat:
     "Arzimaydi! Xizmat qilishdan xursandman. Yana biror savol bo'lsa, bemalol yozing.",
   "kattakon rahmat": "Sizga ham tashakkur! Kuningiz xayrli o'tsin.",
-  ajoyib: "Minnatdorman! Sizning bahoingiz biz uchun muhim. 😊",
-  zor: "Xursandman! Doim yaxshi xizmat qilishga intilamiz.",
-  xayr: "Xayr! Yana keling. Agar muhim xabar bo'lsa, Adminga uzataman.",
-
-  // === QIZIQARLI VA NOODATIY SAVOLLAR (Qo'shimcha) ===
-  "ob-havo":
-    "Kechirasiz, men ob-havo ma'lumotlarini tekshira olmayman, lekin xohlasangiz Adminga uzataman.",
-  "kim g'olib":
-    "Qaysi musobaqa haqida gapiryapsiz? Savolingizni aniqlashtiring, Adminga yuboraman.",
-  charchamadizmi:
-    "Men sun'iy intellektman, charchoq nimaligini bilmayman. Doim xizmatingizga tayyor!",
-  "soat nechchi":
-    "Men aniq vaqtni ko'rsata olmayman, iltimos, o'z qurilmangizdagi soatga qarang.",
-  "sizni kim yozgan": "Meni Jamshid ismli dasturchi yozgan.",
-  "sevimli ovqatingiz":
-    "Mening ovqatlanishim shart emas, chunki men dasturiy kodman! 😉",
-  mashina:
-    "Yangi mashinalar narxi va kredit shartlari haqida Admindan so'rang.",
-  "telefon nomeri":
-    "Ma'muriyatning telefon raqami haqida so'rovni Adminga yuboraman, ular sizga aloqaga chiqadi.",
-  instagram: "Bizning ijtimoiy tarmoqlardagi sahifalarimizni Admindan so'rang.",
-  yangiliklar:
-    "Eng so'nggi yangiliklar bo'yicha Adminga so'rov yuborishingiz mumkin.",
-  "qabul vaqti":
-    "Ma'muriyat qabul vaqtlari bo'yicha so'rovni Adminga uzataman.",
-  "kurslarga yozilish":
-    "Kurslarga ro'yxatdan o'tish uchun Adminga murojaat qiling.",
-  "o'qish narxi": "Kurslarning narxi bo'yicha so'rovni Adminga yuboraman.",
-  "qanaqa talablar":
-    "Kurslarga qabul qilish shartlari bo'yicha Admindan so'rang.",
-  muammo: "Qanday muammo yuz berdi? Batafsil yozing, Adminga yetkazaman.",
-  shikoyat:
-    "Shikoyatingizni to'liq matnda yozing, albatta ma'muriyatga uzataman.",
-  taklif: "Taklifingiz uchun rahmat! Uni Adminga yetkazaman.",
-  "nechta odam":
-    "Botdan foydalanuvchilar soni haqida ma'lumotni Adminga uzataman.",
+  xayr: "Xayr! Yana keling.",
 };
 
 /**
- * AI javoblar lug'atidan mos javobni topadi.
+ * AI javoblar lug'atidan mos javobni topadi. - YANGI QO'SHILGAN QISM
  * @param {string} text - Foydalanuvchi yuborgan matn.
  * @returns {string | null} - Javob matni yoki null.
  */
 function getAiResponse(text) {
-  // Matnni kichik harflarga o'tkazamiz va bo'shliqlarni olib tashlaymiz
   const cleanedText = text.toLowerCase().trim();
   for (const key in AI_RESPONSES) {
-    // Lug'atdagi kalit so'zni o'z ichiga olsa javob qaytarish
     if (cleanedText.includes(key)) {
       return AI_RESPONSES[key];
     }
   }
   return null;
 }
+// ----------------------------------------------------
 
 // ----------------------------------------------------
-// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - Xato tuzatilgan
+// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - Xato tuzatilgan, asl mantig'ingiz saqlangan
 // ----------------------------------------------------
 const USER_IDS_FILE = "user_ids.json";
 let userIds = new Set();
@@ -230,14 +171,11 @@ function loadUserIds() {
       }
 
       try {
-        const parsedData = JSON.parse(data);
-        if (!Array.isArray(parsedData)) {
-          throw new Error("JSON Array emas");
-        } // ID larni String sifatida saqlash (bu node-telegram-bot-api ID larini string qabul qilganini hisobga oladi)
-        return new Set(parsedData.map(String));
+        // ID'larni String sifatida saqlash (bu node-telegram-bot-api ID larini string qabul qilganini hisobga oladi)
+        return new Set(JSON.parse(data).map(String));
       } catch (jsonError) {
         console.error(
-          "❌ Xato: user_ids.json ichidagi JSON ma'lumotlar noto'g'ri formatda yoki bo'sh:",
+          "❌ Xato: JSON ma'lumotlar noto'g'ri formatda:",
           jsonError.message
         );
         return new Set();
@@ -249,7 +187,7 @@ function loadUserIds() {
     }
   } catch (error) {
     console.error(
-      "❌ Xato: Foydalanuvchi ID'larini o'qishda yoki fayl yaratishda xato:",
+      "❌ Xato: Foydalanuvchi ID'larini o'qishda xato:",
       error.message
     );
   }
@@ -261,14 +199,11 @@ function saveUserIds(userIds) {
     const data = JSON.stringify(Array.from(userIds), null, 2);
     fs.writeFileSync(USER_IDS_FILE, data, "utf8");
   } catch (error) {
-    console.error("❌ Xato: Foydalanuvchi ID'larini saqlashda xato:", error);
+    console.error("Foydalanuvchi ID'larini saqlashda xato:", error);
   }
 }
 
-// ----------------------------------------------------
-// !!! MUHIM JOY: XATO TUZATILGAN QATOR !!!
-// ----------------------------------------------------
-userIds = loadUserIds();
+userIds = loadUserIds(); // Xato bergan qism tuzatildi
 console.log(`Bot ishga tushdi. Yuklangan foydalanuvchilar: ${userIds.size}`);
 
 // ----------------------------------------------------
@@ -279,10 +214,9 @@ console.log("Bot ishga tushdi va xabarlarni kutmoqda...");
 
 // --- /start buyrug'i ---
 bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const chatIdString = String(chatId);
-  if (!userIds.has(chatIdString)) {
-    userIds.add(chatIdString);
+  const chatId = String(msg.chat.id);
+  if (!userIds.has(chatId)) {
+    userIds.add(chatId);
     saveUserIds(userIds);
   }
   const welcomeMessage = `
@@ -299,6 +233,7 @@ Menga istalgan xabarni yuboring, u ma'muriyatga uzatiladi.
 // ----------------------------------------------------
 // YORDAMCHI FUNKSIYA: E'LONNI TARQATISH
 // ----------------------------------------------------
+
 function sendBroadcastMessage(adminId, text, targetId = null) {
   const localUserIds = loadUserIds();
   const adminIdString = String(adminId).trim();
@@ -496,18 +431,18 @@ bot.on("callback_query", (callbackQuery) => {
 });
 
 // ----------------------------------------------------
-// Barcha Matnli Xabarlarga Ishlov Berish (Uzatmalar, Elon/Reply va AI javob)
+// Barcha Matnli Xabarlarga Ishlov Berish (Uzatmalar va Elon/Reply)
 // ----------------------------------------------------
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const userText = msg.text;
   const adminIdString = ADMIN_CHAT_ID.trim();
-  const currentChatIdString = String(chatId); // 1. ID saqlash
+  const currentChatIdString = String(chatId); // ID saqlash
 
   if (!userIds.has(currentChatIdString)) {
     userIds.add(currentChatIdString);
     saveUserIds(userIds);
-  } // 2. Buyruqlarni o'tkazib yuborish
+  } // Buyruqlar va /reklama buyrug'ini o'tkazib yuborish
 
   if (!userText || userText.startsWith("/")) {
     if (
@@ -522,47 +457,9 @@ bot.on("message", (msg) => {
       );
     }
     return;
-  }
+  } // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
 
-  // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (AI javob yoki Adminga uzatish)
-  if (currentChatIdString !== adminIdString) {
-    // 1. AI Javob Bazasi orqali tekshirish
-    const aiResponse = getAiResponse(userText);
-    if (aiResponse) {
-      bot.sendMessage(chatId, aiResponse, { parse_mode: "Markdown" });
-      return; // Agar AI javob bergan bo'lsa, Adminga uzatish shart emas
-    }
-
-    // 2. Agar AI javob topmasa, xabarni Adminga uzatish
-    const userName = msg.from.first_name || "Noma'lum foydalanuvchi";
-    const userId = msg.from.id;
-
-    const replyMessage = `
-✍️ **Xabaringiz Qabul Qilindi, ${userName}!**
-
-Ushbu xabar **tezkor ravishda Ma'muriyatga** yetkazildi. Tez orada javob kutib qoling. 🙏
-        `;
-    bot.sendMessage(chatId, replyMessage, { parse_mode: "Markdown" });
-
-    const adminNotification = `
-🔔 **YANGI XABAR KELDI**
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-👤 *Kimdan:* **${userName}** (\`${userId}\`)
-💬 *Chat ID:* \`${chatId}\`
---------------------------------
-*Xabar:*
-\`\`\`
-${userText}
-\`\`\`
-        `;
-    bot.sendMessage(adminIdString, adminNotification, {
-      parse_mode: "Markdown",
-    });
-    return;
-  }
-
-  // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
-  else {
+  if (currentChatIdString === adminIdString) {
     ADMIN_PENDING_MESSAGE[adminIdString] = userText;
 
     const allUsersSet = loadUserIds();
@@ -570,7 +467,7 @@ ${userText}
       (id) => String(id) !== adminIdString
     );
     const inlineKeyboard = [];
-    let targetChatId = null;
+    let targetChatId = null; // 1. REPLY-TO tugmasini tekshirish
 
     const repliedMessage = msg.reply_to_message;
     if (repliedMessage && repliedMessage.text) {
@@ -620,7 +517,7 @@ ${userText}
         text: `📢 Hammasiga E'lon Qilish (${allUsers.length} kishi)`,
         callback_data: "FORWARD_ALL",
       },
-    ]);
+    ]); // Adminga xabarni qayerga yuborishni so'rab jo'natish
 
     const promptText = `*❓ Xabarni Qayerga Yuborish Kerak?*
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
@@ -636,6 +533,41 @@ Iltimos, pastdagi variantlardan birini tanlang:`;
       reply_markup: {
         inline_keyboard: inlineKeyboard,
       },
+    });
+  }
+  // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (Adminga uzatish OR AI javob)
+  else {
+    // 1. AI Javob Bazasi orqali tekshirish - YANGI QO'SHILGAN MANTIQ
+    const aiResponse = getAiResponse(userText);
+    if (aiResponse) {
+      bot.sendMessage(chatId, aiResponse, { parse_mode: "Markdown" });
+      return; // Agar AI javob bergan bo'lsa, Adminga uzatish shart emas
+    }
+
+    // 2. Agar AI javob topmasa, xabarni Adminga uzatish
+    const userName = msg.from.first_name || "Noma'lum foydalanuvchi";
+    const userId = msg.from.id;
+
+    const replyMessage = `
+✍️ **Xabaringiz Qabul Qilindi, ${userName}!**
+
+Ushbu xabar **tezkor ravishda Ma'muriyatga** yetkazildi. Tez orada javob kutib qoling. 🙏
+        `;
+    bot.sendMessage(chatId, replyMessage, { parse_mode: "Markdown" });
+
+    const adminNotification = `
+🔔 **YANGI XABAR KELDI**
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+👤 *Kimdan:* **${userName}** (\`${userId}\`)
+💬 *Chat ID:* \`${chatId}\`
+--------------------------------
+*Xabar:*
+\`\`\`
+${userText}
+\`\`\`
+        `;
+    bot.sendMessage(adminIdString, adminNotification, {
+      parse_mode: "Markdown",
     });
   }
 });

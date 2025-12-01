@@ -18,6 +18,7 @@ const ADMIN_PENDING_MESSAGE = {}; // Admin xabari vaqtinchalik saqlanadi.
 // ----------------------------------------------------
 // TAYYOR REKLAMA VARIANTLARI (10 ta)
 // ----------------------------------------------------
+// Eslatma: Ushbu qism o'zgartirilgani yo'q, avvalgi kod bilan bir xil.
 const ADS_DATA = [
   {
     imageUrl:
@@ -101,71 +102,80 @@ const ADS_DATA = [
 ];
 
 // ----------------------------------------------------
-// KENGAYTIRILGAN AI JAVOBLAR LUG'ATI
+// KENGAYTIRILGAN AI JAVOBLAR LUG'ATI (70+ kalit so'z)
 // ----------------------------------------------------
 const AI_RESPONSES_MAPPING = {
   // [Kalit so'zlar ro'yxati] : "Javob matni"
 
-  // 1. SALOMLASHISH
-  "salom|assalom|qalaysan|qale|qanaqa":
+  // 1. SALOMLASHISH VA HOL SO'RASH
+  "salom|assalom|qale|qanaqa|qanisan|salom alekum|wassalom|sallom":
     "Va alaykum assalom! Botimizga xush kelibsiz. Qanday yordam bera olaman? 😊",
-  "xayrli tong|kun|kech":
+  "xayrli tong|kun|kech|ertalan|tush|oqshom":
     "Sizga ham xayrli kun! Qanday savol bilan murojaat qildingiz?",
-  "yaxshi|zo'r|charchamadi":
+  "yaxshi|zo'r|charchamadi|yahshiman|zor|ok|norm":
     "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
-  "kim|nima|bot":
+  "kim|nima|bot|siz|nega":
     "Men Telegram botiman, Ma'muriyat va foydalanuvchilar o'rtasidagi asosiy vositachiman.",
-
-  // 2. XIZMATLAR
-  "narx|pul|arzon|qancha|skidka|necha pul":
-    "Narxlar haqida bilish uchun aniq mahsulot yoki xizmat nomini yozing, ma'muriyatga uzataman.",
-  "aksiyalar|chegirma|akciya|skidka":
-    "Hozirda qaysi mahsulotlar bo'yicha aksiyalar borligini Admindan so'rang.",
-  "ish vaqti|o'chish|vaqt|soat":
-    "Bizning ish vaqtimiz har kuni ertalab 9:00 dan kechki 18:00 gacha (Uzbekiston vaqti bilan).",
-  "manzil|joy|adres|ofis":
-    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi. Biz Toshkent shahrida joylashganmiz.",
-  "to'lov|plastik|click|payme":
-    "Plastik karta (Uzcard/Humo), Click yoki Payme orqali to'lovlarni qabul qilamiz.",
-  "kurs|dars|o'qish|trening":
-    "Biz dasturlash, dizayn va til kurslarini taklif qilamiz. Batafsil ma'lumotni Adminga uzataman.",
-
-  // 3. BOT HAQIDA
-  "ishlayaptimi|muammo|xato|o'chgan":
-    "Ha, men ayni damda ishlayapman va xabarlaringizni qabul qilishga tayyorman.",
-  "dasturchi|yaratgan|kim yozgan":
-    "Meni professional dasturchilar jamoasi yozgan.",
-  "aloqa|tel|nomer|telefon":
-    "Ma'muriyatning telefon raqami haqida so'rovni Adminga yuboraman, ular sizga aloqaga chiqadi.",
-  "kanal|gruppa|instagram|facebook":
-    "Bizning ijtimoiy tarmoqlardagi sahifalarimizni Admindan so'rang.",
-
-  // 4. XAYRLASHISH VA MINNATDORCHILIK
-  "raxmat|tashakkur|kattakon|minnatdor":
-    "Arzimaydi! Xizmat qilishdan xursandman. Yana biror savol bo'lsa, bemalol yozing.",
-  "ajoyib|yaxshi|ok|qoyil":
-    "Xursandman! Doim yaxshi xizmat qilishga intilamiz. Kuningiz xayrli o'tsin.",
-  "xayr|ko'rishguncha|salomat|do svidaniya":
-    "Xayr! Yana keling. Agar muhim xabar bo'lsa, Adminga uzataman.",
-
-  // 5. BOSHQA SAVOLLAR
-  "yordam|kerak|qanday":
+  "yordam|kerak|qanday|qanaqa|masla|maslahat":
     "Albatta, qanday masala bo'yicha yordam kerak? Savolingizni to'liqroq yozing, Adminga yetkazaman.",
-  "shikoyat|norozilik|muammolar":
+
+  // 2. XIZMATLAR VA MOL/NARX
+  "narx|pul|arzon|qancha|necha pul|summasi|qiymat|tannarx|skitka|chegirma|akciya|aksiya|tekin":
+    "Narxlar va chegirmalar haqida bilish uchun aniq mahsulot yoki xizmat nomini yozing, ma'muriyatga uzataman.",
+  "ish vaqti|o'chish|vaqt|soat|ishla|ochiladi|yopiladi":
+    "Bizning ish vaqtimiz har kuni ertalab 9:00 dan kechki 18:00 gacha (Uzbekiston vaqti bilan).",
+  "manzil|joy|adres|ofis|qayerda|kaerda|joylashuv":
+    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi. Biz Toshkent shahrida joylashganmiz.",
+  "to'lov|plastik|click|payme|karta|naqd|perevod":
+    "Plastik karta (Uzcard/Humo), Click yoki Payme orqali to'lovlarni qabul qilamiz.",
+  "kurs|dars|o'qish|trening|ustoz|mentor|savod":
+    "Biz dasturlash, dizayn va til kurslarini taklif qilamiz. Batafsil ma'lumotni Adminga uzataman.",
+  "xizmat|qiliw|mahsulot|servis|nima bor":
+    "Biz keng turdagi xizmatlar va mahsulotlarni taklif etamiz. Savolingizni aniqlashtiring, iltimos.",
+  "kredit|muddatli|bo'lib|bo'lib tolash|rassrochka":
+    "Muddatli to'lov (rassrochka) imkoniyatlari bo'yicha ma'muriyatga murojaat qiling.",
+
+  // 3. TEXNIK VA BOG'LANISH
+  "ishlayaptimi|muammo|xato|o'chgan|bug|gluk":
+    "Ha, men ayni damda ishlayapman va xabarlaringizni qabul qilishga tayyorman.",
+  "dasturchi|yaratgan|kim yozgan|maker|developer":
+    "Meni professional dasturchilar jamoasi yozgan.",
+  "aloqa|tel|nomer|telefon|raqam|kontakt|call":
+    "Ma'muriyatning telefon raqami haqida so'rovni Adminga yuboraman, ular sizga aloqaga chiqadi.",
+  "kanal|gruppa|instagram|facebook|twitter|ijtimoiy":
+    "Bizning ijtimoiy tarmoqlardagi sahifalarimizni Admindan so'rang.",
+  "admin|murojaat|bog'lanish|lichkaga|admin bilan":
+    "Ma'muriyat bilan bog'lanish uchun xabaringizni yozing, darhol uzataman.",
+  "id|chatid|user id|mening id":
+    "Sizning Chat ID'ingizni Ma'muriyat xabarlaringizni yuborganda ko'radi.",
+
+  // 4. MULOQOT VA QIZIQARLI SAVOLLAR
+  "raxmat|tashakkur|kattakon|minnatdor|thanks|spasibo":
+    "Arzimaydi! Xizmat qilishdan xursandman. Yana biror savol bo'lsa, bemalol yozing.",
+  "ajoyib|a'lo|yaxshi|ok|qoyil|gud|malades|barakalla":
+    "Xursandman! Doim yaxshi xizmat qilishga intilamiz. Kuningiz xayrli o'tsin.",
+  "xayr|ko'rishguncha|salomat|do svidaniya|gudbay|paka|chaqqon":
+    "Xayr! Yana keling. Agar muhim xabar bo'lsa, Adminga uzataman.",
+  "shikoyat|norozilik|muammolar|ayb":
     "Shikoyatingizni to'liq matnda yozing, albatta ma'muriyatga uzataman.",
-  "taklif|fikr|maslahat": "Taklifingiz uchun rahmat! Uni Adminga yetkazaman.",
-  "ob-havo|vaqt|soat|bugun":
+  "taklif|fikr|maslahat|ideya|loyiha":
+    "Taklifingiz uchun rahmat! Uni Adminga yetkazaman.",
+  "ob-havo|vaqt|soat|bugun|ertaga|qachon":
     "Kechirasiz, men ob-havo ma'lumotlarini tekshira olmayman. Savolingizni adminga uzatishimni xohlaysizmi?",
-  "nechta odam|soni":
+  "charchamadizmi|qalisan":
+    "Men sun'iy intellektman, charchoq nimaligini bilmayman. Doim xizmatingizga tayyor!",
+  "sevimli ovqatingiz|ovqat|ichimlik":
+    "Mening ovqatlanishim shart emas, chunki men dasturiy kodman! 😉",
+  "nechta odam|soni|foydalanuvchi|azolar":
     "Botdan foydalanuvchilar soni haqida ma'lumotni Adminga uzataman.",
 };
 
 // ----------------------------------------------------
-// YORDAMCHI FUNKSIYALAR (Qisqartma/Xato tuzatish uchun) - YANGI
+// YORDAMCHI FUNKSIYALAR (Qisqartma/Xato tuzatish uchun)
 // ----------------------------------------------------
 
 /**
- * Matndagi ba'zi keng tarqalgan xato yozuvlarni (W, Q, X, H) to'g'ri o'zbek lotiniga moslashtiradi.
+ * Matndagi eng keng tarqalgan o'zbek lotin-kirill xatolarini tuzatadi.
  * @param {string} text - Foydalanuvchi matni.
  * @returns {string} - Normalizatsiya qilingan matn.
  */
@@ -173,22 +183,22 @@ function normalizeText(text) {
   if (!text) return "";
   let normalized = text.toLowerCase();
 
-  // Keng tarqalgan xato yozuvlarni tuzatish
-  normalized = normalized.replace(/sh/g, "w"); // sh o'rniga w yozsa
-  normalized = normalized.replace(/ch/g, "4"); // ch o'rniga 4 yozsa (misol)
-
-  // W, Q, X, H, G kabi harflarni moslashtirish (agar odamlar uni noto'g'ri ishlatgan bo'lsa)
+  // 1. Keng tarqalgan xato yozuvlarni tuzatish
   normalized = normalized
-    .toLowerCase()
-    .replace(/w/g, "sh") // W -> sh (misol: "wunchaki")
-    .replace(/ch/g, "c") // ch o'rniga c (misol: "cerez")
-    .replace(/yerdam/g, "yordam") // Yordam so'zidagi xato
-    .replace(/qanday/g, "qanaqa") // "Qanday" o'rniga "Qanaqa"
-    .replace(/x/g, "h") // x o'rniga h (misol: xizmat -> hizmat)
+    .replace(/sh/g, "w") // sh o'rniga w yozsa (aksariyat so'zlar uchun)
+    .replace(/c/g, "ch") // c o'rniga ch (ko'pchilik qisqartmalar c bilan yoziladi, uni ch ga aylantirish)
+    .replace(/qale/g, "qalaysan") // qale -> qalaysan
+    .replace(/rahmat/g, "raxmat") // rahmat -> raxmat
+    .replace(/yordam/g, "yerdam") // yordam so'zidagi xato
+    .replace(/qanday/g, "qanaqa") // qanday -> qanaqa
     .replace(/o'/g, "o") // o' o'rniga o
-    .replace(/g'/g, "g"); // g' o'rniga g
+    .replace(/g'/g, "g") // g' o'rniga g
+    .replace(/[.,?!]/g, ""); // Tinish belgilarini olib tashlash
 
-  // Matnni juda qisqa bo'lsa, xato normalizatsiya qilmaslik uchun.
+  // 2. W, X, Q, H ni standart o'zbek lotinidagi (qisqartmalar bilan) harflarga moslash
+  normalized = normalized
+    .replace(/w/g, "sh") // w o'rniga sh
+    .replace(/x/g, "h"); // x o'rniga h (ko'pchilik holatda "hamma" kabi so'zlarni qamrash uchun)
 
   return normalized;
 }
@@ -202,11 +212,8 @@ function getAiResponse(text) {
   // 1. Matnni normalizatsiya qilish (xato/qisqartma tuzatish)
   const normalizedText = normalizeText(text);
 
-  // 2. Tozalash (raqamlar, tinish belgilari)
-  const cleanedText = normalizedText
-    .toLowerCase()
-    .trim()
-    .replace(/[.,?!]/g, "");
+  // 2. Faqatgina bo'sh joylar bilan ajratilgan so'zlarni qoldirish
+  const cleanedText = normalizedText.toLowerCase().trim();
 
   for (const keywordsString in AI_RESPONSES_MAPPING) {
     // Kalit so'zlar ro'yxatini ajratib olish (pipe | orqali)
@@ -214,21 +221,22 @@ function getAiResponse(text) {
 
     for (const keyword of keywords) {
       const trimmedKeyword = keyword.trim();
-      // Agar tozalangan matn kalit so'zni o'z ichiga olsa (qisman moslik)
-      if (cleanedText.includes(trimmedKeyword)) {
-        // Qo'shimcha tekshiruv: "pul" kaliti "pulla" so'zini qamrab olishi kerak.
-        // Qisqa so'zlar uchun aynan mos kelishga yaqinlashamiz.
 
-        // Masalan, agar kalit so'z 3 harfdan qisqa bo'lsa, uni alohida so'z sifatida qidiramiz
-        if (trimmedKeyword.length <= 3) {
-          const regex = new RegExp(`\\b${trimmedKeyword}\\b`);
-          if (regex.test(cleanedText)) {
-            return AI_RESPONSES_MAPPING[keywordsString];
-          }
-        } else {
-          // Uzunroq so'zlar uchun qisman moslik etarli
-          return AI_RESPONSES_MAPPING[keywordsString];
-        }
+      // So'z boshidagi yoki oxiridagi ajratgichlar bilan tekshirish (to'liq so'zga yaqinlashadi)
+      const regex = new RegExp(`(^|\\s)${trimmedKeyword}(\\s|$)`);
+
+      if (regex.test(cleanedText)) {
+        return AI_RESPONSES_MAPPING[keywordsString];
+      }
+
+      // Agar so'z juda qisqa bo'lsa (misol: "pul" yoki "kim"), to'liq so'z sifatida tekshirish.
+      if (trimmedKeyword.length <= 4 && cleanedText === trimmedKeyword) {
+        return AI_RESPONSES_MAPPING[keywordsString];
+      }
+
+      // Qisman moslikni tekshirish (bu uzunroq so'zlar uchun kerak)
+      if (cleanedText.includes(trimmedKeyword) && trimmedKeyword.length > 4) {
+        return AI_RESPONSES_MAPPING[keywordsString];
       }
     }
   }

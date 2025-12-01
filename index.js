@@ -1,9 +1,8 @@
-// Yagona fayl (index.js) - AI javoblari matnning istalgan qismida ishlashi uchun kengaytirilgan.
+// Yagona fayl (index.js) - AI javobining ishonchli ishlashi uchun to'liq yangilandi.
 
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
-// const path = require("path"); // path kutubxonasi ishlatilmagani uchun olib tashlandi
 
 // 2. Token va Admin ID
 // !!! DIQQAT: Token va ADMIN_CHAT_ID o'zgartirilishi kerak!
@@ -14,11 +13,11 @@ const ADMIN_CHAT_ID_STRING = String(ADMIN_CHAT_ID).trim(); // String turida saql
 // ----------------------------------------------------
 // GLOBAL HOLAT UCHUN O'ZGARMALAR
 // ----------------------------------------------------
-// Admin yozgan xabarni keyingi bosqichda ishlatish uchun vaqtinchalik saqlaymiz.
 const ADMIN_PENDING_MESSAGE = {};
 
 // ----------------------------------------------------
 // TAYYOR REKLAMA VARIANTLARI (10 ta)
+// (Bu qism o'zgarishsiz qoldi)
 // ----------------------------------------------------
 const ADS_DATA = [
   {
@@ -104,6 +103,7 @@ const ADS_DATA = [
 
 // ----------------------------------------------------
 // KENGAYTIRILGAN AI JAVOBLAR LUG'ATI
+// (Bu qism o'zgarishsiz qoldi, faqat kirill-lotin gibridlari uchun mo'ljallangan)
 // ----------------------------------------------------
 const AI_RESPONSES_MAPPING = {
   // [Kalit so'zlar ro'yxati] : "Javob matni"
@@ -113,7 +113,7 @@ const AI_RESPONSES_MAPPING = {
     "Va alaykum assalom! Botimizga xush kelibsiz. Qanday yordam bera olaman? 😊",
   "xayrli tong|kun|kech|ertalan|tush|oqshom":
     "Sizga ham xayrli kun! Qanday savol bilan murojaat qildingiz?",
-  "yaxshi|zo'r|charchamadi|yahshiman|zor|ok|norm|qanday|qanaqa|qalesan":
+  "yaxshi|zo'r|charchamadi|yahshiman|zor|ok|norm|qanday|qanaqa|qalesan|qalisan":
     "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
   "kim|nima|bot|siz|nega":
     "Men Telegram botiman, Ma'muriyat va foydalanuvchilar o'rtasidagi asosiy vositachiman.",
@@ -177,7 +177,7 @@ const AI_RESPONSES_MAPPING = {
 
 /**
  * Matndagi lotin-kirill xatolarni tuzatadi va uni butunlay tozalaydi.
- * ASOSIY TUZATISH: Endi 'sh', 'ch', 'q' kabi so'zlarni buzmaymiz.
+ * ASOSIY TUZATISH: Lug'atdagi kalit so'zlarni himoya qilish uchun imkon qadar kam o'zgartirish.
  * @param {string} text - Foydalanuvchi matni.
  * @returns {string} - Tozalangan matn.
  */
@@ -204,7 +204,7 @@ function normalizeText(text) {
     .replace(/\b(qale)\b/g, "qalesan");
 
   // 4. Barcha tinish belgilari, raqamlar va ortiqcha belgilarni olib tashlash
-  // Faqat harflar va bo'shliqlarni qoldiramiz.
+  // Faqat harflar, apostrof (') va bo'shliqlarni qoldiramiz.
   normalized = normalized.replace(/[^a-z' ]/g, " ");
 
   // Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
@@ -215,32 +215,44 @@ function normalizeText(text) {
 
 /**
  * AI javoblar lug'atidan mos javobni topadi. Kalit so'zlarni to'liq so'z sifatida izlaydi.
- * ASOSIY TUZATISH: To'liq so'z (\b) bilan tekshirish usuli kiritildi.
  * @param {string} text - Foydalanuvchi yuborgan matn.
  * @returns {string | null} - Javob matni yoki null.
  */
 function getAiResponse(text) {
-  // 1. Matnni tozalash
   const normalizedText = normalizeText(text);
 
-  // Matnda hech narsa qolmasa, null qaytarish
   if (normalizedText.length === 0) return null;
 
   for (const keywordsString in AI_RESPONSES_MAPPING) {
-    // Kalit so'zlar ro'yxatini ajratish
     const keywords = keywordsString.split("|");
 
     for (const keyword of keywords) {
+      // Kalit so'zni ham tozalash, lekin faqat asosiy tozalashdan o'tkazamiz
       const trimmedKeyword = normalizeText(keyword);
 
       if (trimmedKeyword.length < 2) continue;
 
-      // So'z chegarasini (\b) ishlatgan holda aniq mos kelishini tekshirish
-      // Bu 'salom' so'zini 'salomatlik' ichida topib qo'ymasligini ta'minlaydi.
-      const regex = new RegExp(`\\b${trimmedKeyword}\\b`);
-
-      if (regex.test(normalizedText)) {
+      // 1. ANIQ MOS KELISH (To'liq so'z chegarasi) - Eng muhim tekshiruv
+      const regexExact = new RegExp(`\\b${trimmedKeyword}\\b`);
+      if (regexExact.test(normalizedText)) {
         return AI_RESPONSES_MAPPING[keywordsString];
+      }
+
+      // 2. SO'Z QISMI SIFATIDA MOS KELISH (masalan: "qalesan" so'zi "qalisan" deb kelsa)
+      // Bu faqat bitta kalit so'z bo'lgan xabarlar uchun ishlatiladi.
+      const textWords = normalizedText
+        .split(" ")
+        .filter((word) => word.length > 2);
+      if (textWords.length === 1 && textWords[0].includes(trimmedKeyword)) {
+        return AI_RESPONSES_MAPPING[keywordsString];
+      }
+
+      // 3. UMUMIY MOS KELISH (agar so'z ichida mavjud bo'lsa, bu oxirgi variant)
+      if (normalizedText.includes(trimmedKeyword)) {
+        // Ba'zi qisqa so'zlarda xato qilmasligi uchun faqat eng qisqa kalit so'zlarni o'tkazib yuboramiz.
+        if (trimmedKeyword.length > 4) {
+          return AI_RESPONSES_MAPPING[keywordsString];
+        }
       }
     }
   }
@@ -555,7 +567,7 @@ bot.on("message", (msg) => {
     const aiResponse = getAiResponse(userText);
 
     if (aiResponse) {
-      // AI javob bergan bo'lsa, uni yuboramiz. (Markdownni olib tashladim, chunki javoblar kirillda ko'rinadi)
+      // AI javob bergan bo'lsa, uni yuboramiz.
       bot.sendMessage(chatId, aiResponse);
       return; // ✅ Javob qaytdi! Adminga uzatish SHART EMAS
     }

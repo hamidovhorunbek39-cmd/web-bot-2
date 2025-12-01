@@ -1,0 +1,521 @@
+// Yagona fayl (index.js)
+// Telegram bot (node-telegram-bot-api) uchun, Admin Panel va Broadcast funksiyalari bilan.
+
+// 1. Kerakli kutubxonalarni yuklash
+const TelegramBot = require("node-telegram-bot-api");
+const fs = require("fs");
+
+// 2. Token va Admin ID
+// !!! DIQQAT: Token va ADMIN_CHAT_ID o'zgartirilishi kerak!
+const TOKEN = "8174118912:AAFG6Se1Nrvdc6ZjTWr5-1O72F5PGSfV65I";
+const ADMIN_CHAT_ID = "8268245837"; // Sizning shaxsiy Admin ID'ingiz
+
+// ----------------------------------------------------
+// GLOBAL HOLAT UCHUN O'ZGARMALAR
+// ----------------------------------------------------
+// Admin yozgan xabarni keyingi bosqichda ishlatish uchun vaqtinchalik saqlaymiz.
+const ADMIN_PENDING_MESSAGE = {}; // {adminChatId: 'Saqlangan xabar matni'}
+
+// ----------------------------------------------------
+// TAYYOR REKLAMA VARIANTLARI (10 ta)
+// ----------------------------------------------------
+const ADS_DATA = [
+  {
+    imageUrl:
+      "https://media.rbcdn.ru/media/upload_tmp/2018/lauren-fleischmann-r2aodqjn3b8-unsplash.jpg",
+    price: "99 000 so'm",
+    description:
+      "Yozgi chegirmalar boshlandi! Barcha kiyimlarga 50% gacha chegirma. Tezroq ulguring!",
+    tag: "#Chegirma #YozgiAksiya",
+  },
+  {
+    imageUrl:
+      "https://jamshid91.github.io/myResume.github.io/assets/img/codeclass.jpg",
+    price: "Bepul",
+    description:
+      "IT kurslarimizga ro'yxatdan o'ting va birinchi darsga bepul qatnashing. Keling va dasturlash olamini kashf eting!",
+    tag: "#ITKurslari #BepulDars",
+  },
+  {
+    imageUrl:
+      "https://mobidevices.com/images/2022/01/Acer-Predator-Helios-300.jpeg",
+    price: "3 500 000 so'm",
+    description:
+      "Yangi avlod noutbuklari keldi! Eng kuchli protsessorlar va yuqori tezlik. Kreditga olish imkoniyati mavjud.",
+    tag: "#Texnika #Noutbuklar",
+  },
+  {
+    imageUrl:
+      "https://wallpapers.com/images/hd/1920x1080-desserts-background-k93ze62oiipumrm0.jpg",
+    price: "15 000 so'm",
+    description:
+      "Eng shirin kofe va yangi pishiriqlar! Faqat shu hafta ertalabki maxsus narx.",
+    tag: "#Kofe #Pishiriqlar",
+  },
+  {
+    imageUrl:
+      "https://i.pinimg.com/originals/bf/d5/45/bfd545fbe208315eb52524a2bc274989.jpg",
+    price: "450 000 so'm",
+    description:
+      "Professional fotosessiya xizmati! Oilaviy, to'y va portret fotosessiyalari uchun bron qiling.",
+    tag: "#Fotosessiya #Fotograf",
+  },
+  {
+    imageUrl:
+      "https://i2.wp.com/www.mathematics.lk/wp-content/uploads/2020/06/Learn-Online-English.jpg",
+    price: "14 kunlik sinov",
+    description:
+      "Ingliz tili onlayn kurslariga yoziling! 14 kunlik bepul sinov darsi mavjud.",
+    tag: "#InglizTili #OnlineKurs",
+  },
+  {
+    imageUrl:
+      "https://s.yimg.com/ny/api/res/1.2/vj1YuR8_yt1zxVEY1etfQg--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTUxOQ--/https://media.zenfs.com/en/car_and_driver_581/1383fa250256fa960fc9df0ddb36f3bc",
+    price: "50 000 so'm/soat",
+    description:
+      "Avtomobilingiz uchun kimyoviy tozalash xizmati. Sifat va tezlik kafolati!",
+    tag: "#AvtoXizmat #Himchistka",
+  },
+  {
+    imageUrl: "https://i.ytimg.com/vi/JGsB0fCHh0Y/maxresdefault.jpg",
+    price: "20%",
+    description:
+      "Barcha smartfon aksessuarlariga 20% chegirma! Faqat bir kun amal qiladi.",
+    tag: "#Smartfon #Aksessuarlar",
+  },
+  {
+    imageUrl:
+      "https://mebelmarket.su/upload/iblock/251/06is9y9g8rm8l7loz07z2jgl2oa1x1t9.webp",
+    price: "Boshlang'ich narx 70$",
+    description:
+      "Mebel buyurtma qilish! Eng zamonaviy dizaynlar va yuqori sifatli materiallar.",
+    tag: "#Mebel #Buyurtma",
+  },
+  {
+    imageUrl:
+      "https://media.zenfs.com/en/parade_250/005ebd90537e73269a6563a39075d1fe",
+    price: "10 000 so'm",
+    description:
+      "Yangi kitoblar keldi! Har qanday janrdagi eng sara asarlar to'plami.",
+    tag: "#Kitoblar #Yangi",
+  },
+];
+
+// ----------------------------------------------------
+// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - Xato tuzatildi
+// ----------------------------------------------------
+const USER_IDS_FILE = "user_ids.json";
+let userIds = new Set();
+
+function loadUserIds() {
+  try {
+    if (fs.existsSync(USER_IDS_FILE)) {
+      const data = fs.readFileSync(USER_IDS_FILE, "utf8");
+      // Fayl bo'sh yoki bo'sh joy bo'lsa
+      if (data.trim() === "") {
+        console.warn("⚠️ user_ids.json fayli bo'sh. Bo'sh Set qaytarilmoqda.");
+        return new Set();
+      } // JSON tahlil qilishda xato bo'lishi mumkinligini hisobga olamiz
+
+      try {
+        return new Set(JSON.parse(data));
+      } catch (jsonError) {
+        console.error(
+          "❌ Xato: user_ids.json ichidagi JSON ma'lumotlar noto'g'ri formatda:",
+          jsonError.message
+        );
+        console.log(
+          "🔥 Eslatma: Bot yangi, bo'sh ID ro'yxati bilan ishga tushmoqda."
+        );
+        return new Set();
+      }
+    }
+  } catch (error) {
+    console.error(
+      "❌ Xato: Foydalanuvchi ID'larini o'qishda xato:",
+      error.message
+    );
+    console.log(
+      "🔥 Eslatma: Bot yangi, bo'sh ID ro'yxati bilan ishga tushmoqda."
+    );
+  } // Agar fayl mavjud bo'lmasa yoki har qanday xato yuz bersa, bo'sh Set qaytaramiz
+  return new Set();
+}
+
+function saveUserIds(userIds) {
+  try {
+    const data = JSON.stringify(Array.from(userIds), null, 2);
+    fs.writeFileSync(USER_IDS_FILE, data, "utf8");
+  } catch (error) {
+    console.error("Foydalanuvchi ID'larini saqlashda xato:", error);
+  }
+}
+
+userIds = loadUserIds(); // Xato shu qatorda chiqqan edi, endi funksiya mustahkam
+console.log(`Bot ishga tushdi. Yuklangan foydalanuvchilar: ${userIds.size}`);
+
+// ----------------------------------------------------
+// BOTNI ISHGA TUSHIRISH
+// ----------------------------------------------------
+const bot = new TelegramBot(TOKEN, { polling: true });
+console.log("Bot ishga tushdi va xabarlarni kutmoqda...");
+
+// --- /start buyrug'i ---
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  if (!userIds.has(chatId)) {
+    userIds.add(chatId);
+    saveUserIds(userIds);
+  }
+  const welcomeMessage = `
+🌟 *Assalomu alaykum va Xush kelibsiz!* 🌟
+
+Men sizning yordamchi botingizman.
+Menga istalgan xabarni yuboring, u ma'muriyatga uzatiladi.
+
+*Iltimos, o'zingizni qiziqtirgan savol yoki xabarni yuboring.* 🚀
+    `;
+  bot.sendMessage(chatId, welcomeMessage, { parse_mode: "Markdown" });
+});
+
+// ----------------------------------------------------
+// YORDAMCHI FUNKSIYA: E'LONNI TARQATISH
+// ----------------------------------------------------
+
+/**
+ * Matnli xabarni (elonni) belgilangan foydalanuvchilarga tarqatadi.
+ * @param {string} adminId - Adminning Chat ID'si.
+ * @param {string} text - Tarqatiladigan matn.
+ * @param {string | null} targetId - Faqat shu ID'ga yuborish (yoki 'ALL' - hammasiga).
+ */
+function sendBroadcastMessage(adminId, text, targetId = null) {
+  const localUserIds = loadUserIds();
+  const adminIdString = String(adminId).trim();
+
+  let successCount = 0;
+  let failCount = 0;
+  let usersToSend = []; // Qaysi foydalanuvchilarga yuborishni aniqlash
+
+  if (targetId === "ALL") {
+    usersToSend = Array.from(localUserIds).filter(
+      (id) => String(id) !== adminIdString
+    );
+    bot.sendMessage(
+      adminId,
+      `🚀 E'lon **${usersToSend.length}** ta foydalanuvchiga tarqatilmoqda...`,
+      { parse_mode: "Markdown" }
+    );
+  } else if (targetId && String(targetId) !== adminIdString) {
+    usersToSend.push(targetId);
+    bot.sendMessage(
+      adminId,
+      `🚀 Xabar **${targetId}** Chat ID'ga yuborilmoqda...`,
+      { parse_mode: "Markdown" }
+    );
+  } else {
+    bot.sendMessage(
+      adminId,
+      `⚠️ Xato: Target ID (${targetId}) noto'g'ri yoki Admin ID. Tarqatish bekor qilindi.`,
+      { parse_mode: "Markdown" }
+    );
+    return;
+  }
+
+  const broadcastMessage = `
+📣 **MA'MURİYAT XABARI** 📣
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+*Xabar:*
+${text}
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+*Hurmat bilan, Ma'muriyat.*
+    `;
+
+  usersToSend.forEach((userId) => {
+    bot
+      .sendMessage(userId, broadcastMessage, { parse_mode: "Markdown" })
+      .then(() => {
+        successCount++;
+      })
+      .catch((error) => {
+        failCount++;
+        console.error(`Xabar ${userId} ga yuborishda xato: ${error.message}`);
+      });
+  });
+
+  setTimeout(() => {
+    const resultMessage = `*✅ Xabar Tarqatildi!* *👥 Muvaffaqiyatli:* ${successCount} ta *❌ Yetkazilmadi:* ${failCount} ta`;
+    bot.sendMessage(adminId, resultMessage, { parse_mode: "Markdown" });
+  }, 5000); // Saqlangan xabarni o'chirish
+
+  delete ADMIN_PENDING_MESSAGE[adminId];
+}
+
+// ----------------------------------------------------
+// MEDIA BROADCAST FUNKSIYASI (Reklama)
+// ----------------------------------------------------
+function sendRandomMediaBroadcast(adminId) {
+  const localUserIds = loadUserIds();
+  const adminIdString = String(adminId).trim();
+
+  const randomIndex = Math.floor(Math.random() * ADS_DATA.length);
+  const selectedAd = ADS_DATA[randomIndex];
+
+  const { imageUrl, price, description, tag } = selectedAd;
+
+  let successCount = 0;
+  let failCount = 0;
+  const allUsers = Array.from(localUserIds);
+
+  const captionText = `
+🔥 **MAXSUS REKLAMA TAKLIFI** 🔥
+━━━━━━━━━━━━━━━━━━━━━
+*🎁 Tavsif:* ${description}
+💵 *Narxi:* **${price}**
+━━━━━━━━━━━━━━━━━━━━━
+${tag}
+
+*Batafsil ma'lumot uchun Ma'muriyat bilan bog'laning!*
+    `;
+
+  bot.sendMessage(
+    adminId,
+    `🖼️ Tasodifiy reklama (*${randomIndex + 1}-variant*) *${
+      allUsers.length - 1
+    }* ta foydalanuvchiga tarqatilmoqda...`,
+    { parse_mode: "Markdown" }
+  );
+
+  allUsers.forEach((userId) => {
+    if (String(userId) !== adminIdString) {
+      bot
+        .sendPhoto(userId, imageUrl, {
+          caption: captionText,
+          parse_mode: "Markdown",
+        })
+        .then(() => {
+          successCount++;
+        })
+        .catch((error) => {
+          failCount++;
+          console.error(
+            `Reklama ${userId} ga yuborishda xato: ${error.message}`
+          );
+        });
+    }
+  });
+
+  setTimeout(() => {
+    const resultMessage = `
+*✅ Reklama Tarqatildi!*
+*👥 Yuborildi:* ${successCount} ta
+*❌ Yetkazilmadi:* ${failCount} ta
+        `;
+    bot.sendMessage(adminId, resultMessage, { parse_mode: "Markdown" });
+  }, 5000);
+}
+
+// ----------------------------------------------------
+// MAXSUS BUYRUQ: /reklama UCHUN
+// ----------------------------------------------------
+bot.onText(/\/reklama$/, (msg) => {
+  const adminId = String(msg.chat.id);
+  if (adminId !== ADMIN_CHAT_ID.trim()) {
+    return;
+  }
+  sendRandomMediaBroadcast(adminId);
+});
+
+// ----------------------------------------------------
+// CALLBACK QUERY'GA ISHLOV BERISH (Tugmalar bosilganda)
+// ----------------------------------------------------
+
+bot.on("callback_query", (callbackQuery) => {
+  const message = callbackQuery.message;
+  const adminId = String(message.chat.id);
+  const data = callbackQuery.data;
+
+  if (adminId !== ADMIN_CHAT_ID.trim()) {
+    bot.answerCallbackQuery(callbackQuery.id, "⚠️ Siz Admin emassiz!");
+    return;
+  }
+
+  const pendingText = ADMIN_PENDING_MESSAGE[adminId];
+
+  if (!pendingText) {
+    bot.answerCallbackQuery(
+      callbackQuery.id,
+      "⚠️ Kechirasiz, tarqatiladigan xabar topilmadi!"
+    );
+    bot.editMessageText(
+      `⚠️ *Xabar Tarqatish Bekor Qilindi*: Saqlangan xabar topilmadi. Qayta urinib ko'ring.`,
+      {
+        chat_id: adminId,
+        message_id: message.message_id,
+        parse_mode: "Markdown",
+      }
+    );
+    return;
+  }
+
+  const parts = data.split("_");
+  const action = parts[0];
+
+  if (action === "FORWARD") {
+    const target = parts[1]; // 'ALL' yoki 'chatId'
+
+    bot
+      .editMessageText(
+        `*🚀 Xabar yuborilmoqda...* \n\n*Maqsad:* ${
+          target === "ALL"
+            ? "Barcha foydalanuvchilar"
+            : `Foydalanuvchi ID: ${target}`
+        }`,
+        {
+          chat_id: adminId,
+          message_id: message.message_id,
+          parse_mode: "Markdown",
+        }
+      )
+      .catch((err) => console.error("Tugmani o'chirishda xato:", err.message));
+
+    sendBroadcastMessage(adminId, pendingText, target);
+  } else {
+    bot.answerCallbackQuery(callbackQuery.id, "Tanlov qabul qilindi.");
+  }
+});
+
+// ----------------------------------------------------
+// Barcha Matnli Xabarlarga Ishlov Berish (Uzatmalar va Elon/Reply)
+// ----------------------------------------------------
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const userText = msg.text;
+  const adminIdString = ADMIN_CHAT_ID.trim();
+  const currentChatIdString = String(chatId); // ID saqlash
+
+  if (!userIds.has(chatId)) {
+    userIds.add(chatId);
+    saveUserIds(userIds);
+  } // Buyruqlar va /reklama buyrug'ini o'tkazib yuborish
+
+  if (!userText || userText.startsWith("/")) {
+    if (
+      userText &&
+      !userText.startsWith("/start") &&
+      !userText.startsWith("/reklama")
+    ) {
+      bot.sendMessage(
+        chatId,
+        "⚠️ *Uzr, buyruq topilmadi!* Iltimos, oddiy matnli xabar yuboring.",
+        { parse_mode: "Markdown" }
+      );
+    }
+    return;
+  } // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
+
+  if (currentChatIdString === adminIdString) {
+    ADMIN_PENDING_MESSAGE[adminIdString] = userText;
+
+    const allUsersSet = loadUserIds();
+    const allUsers = Array.from(allUsersSet).filter(
+      (id) => String(id) !== adminIdString
+    );
+    const inlineKeyboard = [];
+    let targetChatId = null; // 1. REPLY-TO tugmasini tekshirish
+
+    const repliedMessage = msg.reply_to_message;
+    if (repliedMessage && repliedMessage.text) {
+      const match = repliedMessage.text.match(/💬 \*Chat ID:\* `(\d+)`/);
+
+      if (match && match[1]) {
+        targetChatId = match[1];
+        inlineKeyboard.push([
+          {
+            text: `↩️ Faqat Shu Foydalanuvchiga Javob Berish (${targetChatId})`,
+            callback_data: `FORWARD_${targetChatId}`,
+          },
+        ]);
+      }
+    } // 2. BOSHQA FOYDALANUVCHILAR ro'yxatidan tugmalar yaratish (oxirgi 5 ta)
+
+    const recentUsers = allUsers
+      .filter((id) => String(id) !== targetChatId)
+      .slice(-5)
+      .reverse();
+
+    if (recentUsers.length > 0 && (recentUsers.length > 0 || targetChatId)) {
+      inlineKeyboard.push([
+        {
+          text: "--- YAKKA YUBORISH VARIANTLARI ---",
+          callback_data: "ignore_header_1",
+        },
+      ]);
+
+      recentUsers.forEach((userId) => {
+        inlineKeyboard.push([
+          {
+            text: `👤 Eng So'nggi Foydalanuvchi: ${userId}`,
+            callback_data: `FORWARD_${userId}`,
+          },
+        ]);
+      });
+    } // 3. "Hammasiga" tugmasi
+    inlineKeyboard.push([
+      {
+        text: "------------------------------------",
+        callback_data: "ignore_header_2",
+      },
+    ]);
+    inlineKeyboard.push([
+      {
+        text: `📢 Hammasiga E'lon Qilish (${allUsers.length} kishi)`,
+        callback_data: "FORWARD_ALL",
+      },
+    ]); // Adminga xabarni qayerga yuborishni so'rab jo'natish
+
+    const promptText = `*❓ Xabarni Qayerga Yuborish Kerak?*
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+*Matn:*
+\`\`\`
+${userText.substring(0, 100)}${userText.length > 100 ? "..." : ""}
+\`\`\`
+
+Iltimos, pastdagi variantlardan birini tanlang:`;
+
+    bot.sendMessage(chatId, promptText, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: inlineKeyboard,
+      },
+    });
+  } // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (Adminga uzatish)
+  else {
+    const userName = msg.from.first_name || "Noma'lum foydalanuvchi";
+    const userId = msg.from.id;
+
+    const replyMessage = `
+✍️ **Xabaringiz Qabul Qilindi, ${userName}!**
+
+Ushbu xabar **tezkor ravishda Ma'muriyatga** yetkazildi. Tez orada javob kutib qoling. 🙏
+        `;
+    bot.sendMessage(chatId, replyMessage, { parse_mode: "Markdown" });
+
+    const adminNotification = `
+🔔 **YANGI XABAR KELDI**
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+👤 *Kimdan:* **${userName}** (\`${userId}\`)
+💬 *Chat ID:* \`${chatId}\`
+--------------------------------
+*Xabar:*
+\`\`\`
+${userText}
+\`\`\`
+        `;
+    bot.sendMessage(adminIdString, adminNotification, {
+      parse_mode: "Markdown",
+    });
+  }
+});
+
+// Xatolar uchun ishlov berish
+bot.on("polling_error", (err) => console.error("Polling xatosi:", err.message));

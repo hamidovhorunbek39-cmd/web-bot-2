@@ -1,4 +1,4 @@
-// Yagona fayl (index.js) - AI javoblari matnning istalgan qismida ishlashi uchun tuzatildi.
+// Yagona fayl (index.js) - AI javoblari matnning istalgan qismida ishlashi uchun kengaytirilgan.
 
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
@@ -6,9 +6,9 @@ const fs = require("fs");
 
 // 2. Token va Admin ID
 // !!! DIQQAT: Token va ADMIN_CHAT_ID o'zgartirilishi kerak!
-// Hozirgi koddagi ADMIN_CHAT_ID 8268245837, rasmdagi esa 9-Green ID si aniq emas. O'zingiznikini kiriting.
 const TOKEN = "8174118912:AAFG6Se1Nrvdc6ZjTWr5-1O72F5PGSfV65I";
 const ADMIN_CHAT_ID = "8268245837"; // << BU YERGA O'ZINGIZNING TELEGRAM ID'ingizni QO'YING!
+const ADMIN_CHAT_ID_STRING = String(ADMIN_CHAT_ID).trim(); // String turida saqlaymiz
 
 // ----------------------------------------------------
 // GLOBAL HOLAT UCHUN O'ZGARMALAR
@@ -17,6 +17,7 @@ const ADMIN_PENDING_MESSAGE = {};
 
 // ----------------------------------------------------
 // TAYYOR REKLAMA VARIANTLARI (10 ta)
+// (Bu qism o'zgarishsiz qoldi)
 // ----------------------------------------------------
 const ADS_DATA = [
   {
@@ -102,6 +103,7 @@ const ADS_DATA = [
 
 // ----------------------------------------------------
 // KENGAYTIRILGAN AI JAVOBLAR LUG'ATI
+// (Bu qism ham o'zgarishsiz qoldi, sababi u yetarlicha yaxshi tuzilgan)
 // ----------------------------------------------------
 const AI_RESPONSES_MAPPING = {
   // [Kalit so'zlar ro'yxati] : "Javob matni"
@@ -182,29 +184,32 @@ function normalizeText(text) {
   if (!text) return "";
   let normalized = text.toLowerCase();
 
-  // 1. Keng tarqalgan qisqartma va xatolarni tuzatish
+  // 1. Keng tarqalgan lotin-kirill almashtirish (qo'shimcha himoya)
   normalized = normalized
     .replace(/a\.s/g, "assalom")
     .replace(/v\.a\.s/g, "assalom")
     .replace(/yerdam/g, "yordam")
 
-    // 2. Lotin xatolari (w, x, c, o', g' kabi)
-    .replace(/w/g, "sh")
+    // Lotin maxsus harflarini oddiyga o'tkazish
+    .replace(/oʻ|o‘/g, "o") // o'
+    .replace(/gʻ|g‘/g, "g") // g'
+    .replace(/sh/g, "s") // sh - s ga
+    .replace(/ch/g, "c") // ch - c ga
+
+    // Eng ko'p uchraydigan kirill-lotin xatolarini tuzatish
+    .replace(/w/g, "v")
     .replace(/x/g, "h")
     .replace(/c/g, "ch")
-    .replace(/o'/g, "o")
-    .replace(/g'/g, "g")
+    .replace(/q/g, "k") // q - k ga
 
-    // 3. Qisqa, juda mashhur qisqartmalarni to'liq so'zga almashtirish
-    // Bu bosqich faqat matnni tozalash uchun. "salomqale" kabi yozilsa ham keyin ishlashi uchun.
-    .replace(/\b(sa|as)\b/g, "salom")
+    // Qisqa, juda mashhur qisqartmalarni to'liq so'zga almashtirish
+    .replace(/\b(sa|as|a s)\b/g, "salom")
     .replace(/\b(qale)\b/g, "qalesan")
 
-    // 4. Barcha tinish belgilari va raqamlarni olib tashlash
-    // Raqamlarni olib tashlash ba'zi savollarga (masalan, narx) ta'sir qilishi mumkin, shuning uchun 'narx' kalit so'zi qolsa ham javob qaytadi.
+    // Barcha tinish belgilari, raqamlar va ortiqcha belgilar/bo'shliqlarni olib tashlash
     .replace(/[^a-z' ]/g, " ");
 
-  // 5. Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
+  // Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
   normalized = normalized.replace(/\s+/g, " ");
 
   return normalized.trim();
@@ -216,17 +221,23 @@ function normalizeText(text) {
  * @returns {string | null} - Javob matni yoki null.
  */
 function getAiResponse(text) {
-  // Matnni tozalash va kichik harflarga o'tkazish
+  // 1. Matnni tozalash va kichik harflarga o'tkazish
   const normalizedText = normalizeText(text);
 
+  // 2. Tozalangan matndagi barcha so'zlarni olish
+  const textWords = normalizedText.split(" ").filter((word) => word.length > 2); // 2 harfdan kichik so'zlarni e'tiborga olmaymiz (a, u, e kabi)
+
   for (const keywordsString in AI_RESPONSES_MAPPING) {
-    // Kalit so'zlar ro'yxatini ajratish
-    const keywords = keywordsString.split("|");
+    // Kalit so'zlar ro'yxatini ajratish va tozalash
+    const keywords = keywordsString.split("|").map((k) => normalizeText(k));
 
     for (const keyword of keywords) {
       const trimmedKeyword = keyword.trim();
 
+      if (trimmedKeyword.length < 3) continue; // Agar kalit so'z juda qisqa bo'lsa o'tkazib yuborish
+
       // normalizedText ichida ushbu kalit so'z mavjudligini tekshirish
+      // Bu qismi oldingi kodda to'g'ri ishlashi kerak edi, ammo tekshiruvni mustahkamlaymiz.
       if (normalizedText.includes(trimmedKeyword)) {
         return AI_RESPONSES_MAPPING[keywordsString];
       }
@@ -250,7 +261,7 @@ function loadUserIds() {
         return new Set();
       }
       try {
-        // Saqlangan ID'larni string ko'rinishida yozish
+        // ID'larni String formatida o'qishni ta'minlaymiz
         return new Set(JSON.parse(data).map(String));
       } catch (jsonError) {
         console.error(
@@ -260,7 +271,6 @@ function loadUserIds() {
         return new Set();
       }
     } else {
-      // Fayl mavjud bo'lmasa, uni bo'sh array bilan yaratish
       fs.writeFileSync(USER_IDS_FILE, "[]", "utf8");
       return new Set();
     }
@@ -443,7 +453,7 @@ ${tag}
 // ----------------------------------------------------
 bot.onText(/\/reklama$/, (msg) => {
   const adminId = String(msg.chat.id);
-  if (adminId !== ADMIN_CHAT_ID.trim()) {
+  if (adminId !== ADMIN_CHAT_ID_STRING) {
     return;
   }
   sendRandomMediaBroadcast(adminId);
@@ -458,7 +468,7 @@ bot.on("callback_query", (callbackQuery) => {
   const adminId = String(message.chat.id);
   const data = callbackQuery.data;
 
-  if (adminId !== ADMIN_CHAT_ID.trim()) {
+  if (adminId !== ADMIN_CHAT_ID_STRING) {
     bot.answerCallbackQuery(callbackQuery.id, "⚠️ Siz Admin emassiz!");
     return;
   }
@@ -514,14 +524,11 @@ bot.on("callback_query", (callbackQuery) => {
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const userText = msg.text;
-  const adminIdString = ADMIN_CHAT_ID.trim();
-  const currentChatIdString = String(chatId); // 1. ID saqlash
-
+  const currentChatIdString = String(chatId); // 1. ID saqlash (string formatida)
   if (!userIds.has(currentChatIdString)) {
     userIds.add(currentChatIdString);
     saveUserIds(userIds);
   } // 2. Buyruqlarni o'tkazib yuborish
-
   if (!userText || userText.startsWith("/")) {
     if (
       userText &&
@@ -535,18 +542,14 @@ bot.on("message", (msg) => {
       );
     }
     return;
-  }
-
-  // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (AI Javob yoki Adminga uzatish)
-  if (currentChatIdString !== adminIdString) {
+  } // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (AI Javob yoki Adminga uzatish)
+  if (currentChatIdString !== ADMIN_CHAT_ID_STRING) {
     // 2.1. AI Javob Bazasi orqali tekshirish (BIRINCHI QADAM)
     const aiResponse = getAiResponse(userText);
     if (aiResponse) {
       bot.sendMessage(chatId, aiResponse, { parse_mode: "Markdown" });
-      return; // Agar AI javob bergan bo'lsa, Adminga uzatish ShART EMAS
-    }
-
-    // 2.2. Agar AI javob topmasa, xabarni Adminga uzatish
+      return; // Agar AI javob bergan bo'lsa, Adminga uzatish SHART EMAS
+    } // 2.2. Agar AI javob topmasa, xabarni Adminga uzatish
     const userName = msg.from.first_name || "Noma'lum foydalanuvchi";
     const userId = msg.from.id;
 
@@ -568,45 +571,36 @@ Ushbu xabar **tezkor ravishda Ma'muriyatga** yetkazildi. Tez orada javob kutib q
 ${userText}
 \`\`\`
         `;
-    bot.sendMessage(adminIdString, adminNotification, {
+    bot.sendMessage(ADMIN_CHAT_ID_STRING, adminNotification, {
       parse_mode: "Markdown",
     });
-  }
-  // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
+  } // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
   else {
     // Adminning oddiy xabarlari uchun AI javobini tekshirish
     const aiResponseForAdmin = getAiResponse(userText);
-
     if (aiResponseForAdmin) {
       bot.sendMessage(chatId, aiResponseForAdmin, { parse_mode: "Markdown" });
       return;
-    }
+    } // Agar admin foydalanuvchining xabariga "reply" qilgan bo'lsa, javob stsenariysini boshlash
 
-    // Agar admin foydalanuvchining xabariga "reply" qilgan bo'lsa, javob stsenariysini boshlash
     const repliedMessage = msg.reply_to_message;
     if (repliedMessage && repliedMessage.text) {
-      const match = repliedMessage.text.match(/💬 \*Chat ID:\* `(\d+)`/);
-
-      // Xabar REPLY yordamida uzatilgan bo'lsa, E'lon paneli funksiyasini boshlash
+      const match = repliedMessage.text.match(/💬 \*Chat ID:\* `(\d+)`/); // Xabar REPLY yordamida uzatilgan bo'lsa, E'lon paneli funksiyasini boshlash
       if (match && match[1]) {
         const targetChatId = match[1];
-
-        ADMIN_PENDING_MESSAGE[adminIdString] = userText;
+        ADMIN_PENDING_MESSAGE[ADMIN_CHAT_ID_STRING] = userText;
 
         const allUsersSet = loadUserIds();
         const allUsers = Array.from(allUsersSet).filter(
-          (id) => String(id) !== adminIdString
+          (id) => String(id) !== ADMIN_CHAT_ID_STRING
         );
-
         const inlineKeyboard = [];
-
         inlineKeyboard.push([
           {
             text: `↩️ Faqat Shu Foydalanuvchiga Javob Berish (${targetChatId})`,
             callback_data: `FORWARD_${targetChatId}`,
           },
         ]);
-
         inlineKeyboard.push([
           {
             text: "------------------------------------",
@@ -619,7 +613,6 @@ ${userText}
             callback_data: "FORWARD_ALL",
           },
         ]);
-
         const promptText = `*❓ Xabarni Qayerga Yuborish Kerak?*
 ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
 *Matn:*
@@ -637,9 +630,7 @@ Iltimos, pastdagi variantlardan birini tanlang:`;
         });
         return;
       }
-    }
-
-    // Admin tomonidan reply qilinmagan oddiy xabar bo'lsa
+    } // Admin tomonidan reply qilinmagan oddiy xabar bo'lsa
     if (!aiResponseForAdmin) {
       bot.sendMessage(
         chatId,

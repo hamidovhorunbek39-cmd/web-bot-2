@@ -1,4 +1,4 @@
-// Yagona fayl (index.js) - Barcha xatolar tuzatildi va AI stsenariysi kuchaytirildi.
+// Yagona fayl (index.js) - AI/Qisqartma funksiyalari matnning istalgan joyida ishlashi uchun tuzatildi.
 
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
@@ -12,7 +12,6 @@ const ADMIN_CHAT_ID = "8268245837"; // Sizning shaxsiy Admin ID'ingiz
 // ----------------------------------------------------
 // GLOBAL HOLAT UCHUN O'ZGARMALAR
 // ----------------------------------------------------
-// Admin xabari vaqtinchalik saqlanadi. (Rasmdagi kabi)
 const ADMIN_PENDING_MESSAGE = {};
 
 // ----------------------------------------------------
@@ -107,12 +106,11 @@ const AI_RESPONSES_MAPPING = {
   // [Kalit so'zlar ro'yxati] : "Javob matni"
 
   // 1. SALOMLASHISH VA HOL SO'RASH
-  // 'sa' va 'qale' kiritildi
-  "salom|assalom|qale|qanisan|salom alekum|wassalom|sallom|sa|as|a.s|va a.s|v.a.s":
+  "salom|assalom|qale|qanisan|salom alekum|wassalom|sallom|sa|as|a.s|v.a.s":
     "Va alaykum assalom! Botimizga xush kelibsiz. Qanday yordam bera olaman? 😊",
   "xayrli tong|kun|kech|ertalan|tush|oqshom":
     "Sizga ham xayrli kun! Qanday savol bilan murojaat qildingiz?",
-  "yaxshi|zo'r|charchamadi|yahshiman|zor|ok|norm|qanday|qanaqa":
+  "yaxshi|zo'r|charchamadi|yahshiman|zor|ok|norm|qanday|qanaqa|qalesan":
     "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
   "kim|nima|bot|siz|nega":
     "Men Telegram botiman, Ma'muriyat va foydalanuvchilar o'rtasidagi asosiy vositachiman.",
@@ -185,11 +183,11 @@ function normalizeText(text) {
 
   // Keng tarqalgan qisqartma va xatolarni tuzatish
   normalized = normalized
-    .replace(/a\.s/g, "assalom") // a.s -> assalom
-    .replace(/v\.a\.s/g, "assalom") // v.a.s -> assalom
-    .replace(/sa/g, "salom") // sa -> salom (agar alohida so'z bo'lsa, quyida tekshiriladi)
-    .replace(/qale/g, "qalaysan") // qale -> qalaysan
-    .replace(/yordam/g, "yerdam") // yordam so'zidagi xato
+    .replace(/a\.s/g, "assalom")
+    .replace(/v\.a\.s/g, "assalom")
+    .replace(/sa/g, "salom") // Sa ni salomga o'girish
+    .replace(/qale/g, "qalaysan") // Qale ni qalaysanga o'girish
+    .replace(/yordam/g, "yerdam")
 
     // Lotin xatolari (w, x, o', g' kabi)
     .replace(/w/g, "sh")
@@ -197,13 +195,17 @@ function normalizeText(text) {
     .replace(/c/g, "ch")
     .replace(/o'/g, "o")
     .replace(/g'/g, "g")
-    .replace(/[.,?!]/g, ""); // Tinish belgilarini olib tashlash
+    .replace(/[.,?!]/g, " "); // Tinish belgilarini bo'sh joyga almashtirish
+
+  // Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
+  normalized = normalized.replace(/\s+/g, " ");
 
   return normalized.trim();
 }
 
 /**
  * AI javoblar lug'atidan mos javobni topadi.
+ * ENG MUHIM TUZATISH: Endi matnning istalgan joyidagi kalit so'zga mos keladi.
  * @param {string} text - Foydalanuvchi yuborgan matn.
  * @returns {string | null} - Javob matni yoki null.
  */
@@ -216,8 +218,10 @@ function getAiResponse(text) {
     for (const keyword of keywords) {
       const trimmedKeyword = keyword.trim();
 
-      // To'liq so'z mosligi uchun regex (so'z boshida yoki oxirida)
-      const regex = new RegExp(`(^|\\s)${trimmedKeyword}(\\s|$)`);
+      // To'liq so'z mosligi uchun regex
+      // Bu '\b' (so'z chegarasi) bilan ishlaydi, shuning uchun "ish" kaliti "ishlatish" ga mos kelmaydi,
+      // lekin "yaxshi ish" ga mos keladi. Bu aniqlikni oshiradi.
+      const regex = new RegExp(`\\b${trimmedKeyword}\\b`, "i");
 
       if (regex.test(normalizedText)) {
         return AI_RESPONSES_MAPPING[keywordsString];
@@ -564,13 +568,9 @@ ${userText}
   }
   // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
   else {
-    // ADMIN FAQAT REPLY QILSA YOKI MAXSUS BUYRUQ YUBORSA E'LON STSENARIYSIGA KIRADI.
-    // Qolgan matnlar (masalan, "sa" deb yozsa) AI javobidan o'tishi kerak.
-
-    // Admin tomonidan yuborilgan xabar AI javoblariga mos kelmasligini tekshirish
+    // Adminning oddiy xabarlari (masalan, "qalesan") uchun AI javobini tekshirish
     const aiResponseForAdmin = getAiResponse(userText);
 
-    // Agar adminning xabari ham AI javoblariga mos kelsa, AI javobini yuborish
     if (aiResponseForAdmin) {
       bot.sendMessage(chatId, aiResponseForAdmin, { parse_mode: "Markdown" });
       return;

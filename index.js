@@ -4,7 +4,6 @@
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
-// const path = require("path"); // path kutubxonasi ishlatilmagani uchun olib tashlandi.
 
 // 2. Token va Admin ID
 // !!! DIQQAT: Token va ADMIN_CHAT_ID o'zgartirilishi kerak!
@@ -14,8 +13,7 @@ const ADMIN_CHAT_ID = "8268245837"; // Sizning shaxsiy Admin ID'ingiz
 // ----------------------------------------------------
 // GLOBAL HOLAT UCHUN O'ZGARMALAR
 // ----------------------------------------------------
-// Admin yozgan xabarni keyingi bosqichda ishlatish uchun vaqtinchalik saqlaymiz.
-const ADMIN_PENDING_MESSAGE = {}; // {adminChatId: 'Saqlangan xabar matni'}
+const ADMIN_PENDING_MESSAGE = {}; // Admin xabari vaqtinchalik saqlanadi.
 
 // ----------------------------------------------------
 // TAYYOR REKLAMA VARIANTLARI (10 ta)
@@ -103,52 +101,135 @@ const ADS_DATA = [
 ];
 
 // ----------------------------------------------------
-// TAYYOR AI JAVOBLAR LUG'ATI (50+ savol-javob) - YANGI QO'SHILGAN QISM
+// KENGAYTIRILGAN AI JAVOBLAR LUG'ATI
 // ----------------------------------------------------
-const AI_RESPONSES = {
-  // === SALOMLASHISH VA ILK SAVOLLAR ===
-  salom:
+const AI_RESPONSES_MAPPING = {
+  // [Kalit so'zlar ro'yxati] : "Javob matni"
+
+  // 1. SALOMLASHISH
+  "salom|assalom|qalaysan|qale|qanaqa":
     "Va alaykum assalom! Botimizga xush kelibsiz. Qanday yordam bera olaman? 😊",
-  "assalomu alaykum":
-    "Va alaykum assalom! Xizmatingizga tayyorman. Savolingizni yuboring.",
-  qalesiz: "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
-  yaxshimisiz: "Rahmat, yaxshiman! Sizga qanday yordam bera olaman?",
-  "kim siz":
+  "xayrli tong|kun|kech":
+    "Sizga ham xayrli kun! Qanday savol bilan murojaat qildingiz?",
+  "yaxshi|zo'r|charchamadi":
+    "Rahmat, yaxshiman! Men AI, doim ishlayman. Siz qandaysiz?",
+  "kim|nima|bot":
     "Men Telegram botiman, Ma'muriyat va foydalanuvchilar o'rtasidagi asosiy vositachiman.",
-  "nima qilasiz":
-    "Men oddiy xabarlarni Adminga uzataman va ba'zi savollarga avtomatik javob beraman.",
-  "yordam kerak":
-    "Albatta, qanday masala bo'yicha yordam kerak? Savolingizni to'liqroq yozing, Adminga yetkazaman.",
 
-  // === XIZMATLAR VA KOMPANIYA HAQIDA ===
-  "ish vaqti":
-    "Bizning ish vaqtimiz har kuni ertalab 9:00 dan kechki 18:00 gacha (Uzbekiston vaqti bilan).",
-  manzil:
-    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi.",
-  narxlar:
+  // 2. XIZMATLAR
+  "narx|pul|arzon|qancha|skidka|necha pul":
     "Narxlar haqida bilish uchun aniq mahsulot yoki xizmat nomini yozing, ma'muriyatga uzataman.",
-  "to'lov usullari":
-    "Plastik karta (Uzcard/Humo), Click yoki Payme orqali to'lovlarni qabul qilamiz.",
-  aksiya:
+  "aksiyalar|chegirma|akciya|skidka":
     "Hozirda qaysi mahsulotlar bo'yicha aksiyalar borligini Admindan so'rang.",
+  "ish vaqti|o'chish|vaqt|soat":
+    "Bizning ish vaqtimiz har kuni ertalab 9:00 dan kechki 18:00 gacha (Uzbekiston vaqti bilan).",
+  "manzil|joy|adres|ofis":
+    "Manzilimiz haqidagi ma'lumotlar uchun ma'muriyatga murojaat qiling, ular yordam berishadi. Biz Toshkent shahrida joylashganmiz.",
+  "to'lov|plastik|click|payme":
+    "Plastik karta (Uzcard/Humo), Click yoki Payme orqali to'lovlarni qabul qilamiz.",
+  "kurs|dars|o'qish|trening":
+    "Biz dasturlash, dizayn va til kurslarini taklif qilamiz. Batafsil ma'lumotni Adminga uzataman.",
 
-  // === XAYRLASHISH VA MINNATDORCHILIK ===
-  raxmat:
+  // 3. BOT HAQIDA
+  "ishlayaptimi|muammo|xato|o'chgan":
+    "Ha, men ayni damda ishlayapman va xabarlaringizni qabul qilishga tayyorman.",
+  "dasturchi|yaratgan|kim yozgan":
+    "Meni professional dasturchilar jamoasi yozgan.",
+  "aloqa|tel|nomer|telefon":
+    "Ma'muriyatning telefon raqami haqida so'rovni Adminga yuboraman, ular sizga aloqaga chiqadi.",
+  "kanal|gruppa|instagram|facebook":
+    "Bizning ijtimoiy tarmoqlardagi sahifalarimizni Admindan so'rang.",
+
+  // 4. XAYRLASHISH VA MINNATDORCHILIK
+  "raxmat|tashakkur|kattakon|minnatdor":
     "Arzimaydi! Xizmat qilishdan xursandman. Yana biror savol bo'lsa, bemalol yozing.",
-  "kattakon rahmat": "Sizga ham tashakkur! Kuningiz xayrli o'tsin.",
-  xayr: "Xayr! Yana keling.",
+  "ajoyib|yaxshi|ok|qoyil":
+    "Xursandman! Doim yaxshi xizmat qilishga intilamiz. Kuningiz xayrli o'tsin.",
+  "xayr|ko'rishguncha|salomat|do svidaniya":
+    "Xayr! Yana keling. Agar muhim xabar bo'lsa, Adminga uzataman.",
+
+  // 5. BOSHQA SAVOLLAR
+  "yordam|kerak|qanday":
+    "Albatta, qanday masala bo'yicha yordam kerak? Savolingizni to'liqroq yozing, Adminga yetkazaman.",
+  "shikoyat|norozilik|muammolar":
+    "Shikoyatingizni to'liq matnda yozing, albatta ma'muriyatga uzataman.",
+  "taklif|fikr|maslahat": "Taklifingiz uchun rahmat! Uni Adminga yetkazaman.",
+  "ob-havo|vaqt|soat|bugun":
+    "Kechirasiz, men ob-havo ma'lumotlarini tekshira olmayman. Savolingizni adminga uzatishimni xohlaysizmi?",
+  "nechta odam|soni":
+    "Botdan foydalanuvchilar soni haqida ma'lumotni Adminga uzataman.",
 };
 
+// ----------------------------------------------------
+// YORDAMCHI FUNKSIYALAR (Qisqartma/Xato tuzatish uchun) - YANGI
+// ----------------------------------------------------
+
 /**
- * AI javoblar lug'atidan mos javobni topadi. - YANGI QO'SHILGAN QISM
+ * Matndagi ba'zi keng tarqalgan xato yozuvlarni (W, Q, X, H) to'g'ri o'zbek lotiniga moslashtiradi.
+ * @param {string} text - Foydalanuvchi matni.
+ * @returns {string} - Normalizatsiya qilingan matn.
+ */
+function normalizeText(text) {
+  if (!text) return "";
+  let normalized = text.toLowerCase();
+
+  // Keng tarqalgan xato yozuvlarni tuzatish
+  normalized = normalized.replace(/sh/g, "w"); // sh o'rniga w yozsa
+  normalized = normalized.replace(/ch/g, "4"); // ch o'rniga 4 yozsa (misol)
+
+  // W, Q, X, H, G kabi harflarni moslashtirish (agar odamlar uni noto'g'ri ishlatgan bo'lsa)
+  normalized = normalized
+    .toLowerCase()
+    .replace(/w/g, "sh") // W -> sh (misol: "wunchaki")
+    .replace(/ch/g, "c") // ch o'rniga c (misol: "cerez")
+    .replace(/yerdam/g, "yordam") // Yordam so'zidagi xato
+    .replace(/qanday/g, "qanaqa") // "Qanday" o'rniga "Qanaqa"
+    .replace(/x/g, "h") // x o'rniga h (misol: xizmat -> hizmat)
+    .replace(/o'/g, "o") // o' o'rniga o
+    .replace(/g'/g, "g"); // g' o'rniga g
+
+  // Matnni juda qisqa bo'lsa, xato normalizatsiya qilmaslik uchun.
+
+  return normalized;
+}
+
+/**
+ * AI javoblar lug'atidan mos javobni topadi (kalit so'zlar bo'yicha).
  * @param {string} text - Foydalanuvchi yuborgan matn.
  * @returns {string | null} - Javob matni yoki null.
  */
 function getAiResponse(text) {
-  const cleanedText = text.toLowerCase().trim();
-  for (const key in AI_RESPONSES) {
-    if (cleanedText.includes(key)) {
-      return AI_RESPONSES[key];
+  // 1. Matnni normalizatsiya qilish (xato/qisqartma tuzatish)
+  const normalizedText = normalizeText(text);
+
+  // 2. Tozalash (raqamlar, tinish belgilari)
+  const cleanedText = normalizedText
+    .toLowerCase()
+    .trim()
+    .replace(/[.,?!]/g, "");
+
+  for (const keywordsString in AI_RESPONSES_MAPPING) {
+    // Kalit so'zlar ro'yxatini ajratib olish (pipe | orqali)
+    const keywords = keywordsString.split("|");
+
+    for (const keyword of keywords) {
+      const trimmedKeyword = keyword.trim();
+      // Agar tozalangan matn kalit so'zni o'z ichiga olsa (qisman moslik)
+      if (cleanedText.includes(trimmedKeyword)) {
+        // Qo'shimcha tekshiruv: "pul" kaliti "pulla" so'zini qamrab olishi kerak.
+        // Qisqa so'zlar uchun aynan mos kelishga yaqinlashamiz.
+
+        // Masalan, agar kalit so'z 3 harfdan qisqa bo'lsa, uni alohida so'z sifatida qidiramiz
+        if (trimmedKeyword.length <= 3) {
+          const regex = new RegExp(`\\b${trimmedKeyword}\\b`);
+          if (regex.test(cleanedText)) {
+            return AI_RESPONSES_MAPPING[keywordsString];
+          }
+        } else {
+          // Uzunroq so'zlar uchun qisman moslik etarli
+          return AI_RESPONSES_MAPPING[keywordsString];
+        }
+      }
     }
   }
   return null;
@@ -156,7 +237,7 @@ function getAiResponse(text) {
 // ----------------------------------------------------
 
 // ----------------------------------------------------
-// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH) - Xato tuzatilgan, asl mantig'ingiz saqlangan
+// FAYL TIZIMI FUNKSIYALARI (ID SAQLASH)
 // ----------------------------------------------------
 const USER_IDS_FILE = "user_ids.json";
 let userIds = new Set();
@@ -166,12 +247,9 @@ function loadUserIds() {
     if (fs.existsSync(USER_IDS_FILE)) {
       const data = fs.readFileSync(USER_IDS_FILE, "utf8");
       if (data.trim() === "") {
-        console.warn("⚠️ user_ids.json fayli bo'sh. Bo'sh Set qaytarilmoqda.");
         return new Set();
       }
-
       try {
-        // ID'larni String sifatida saqlash (bu node-telegram-bot-api ID larini string qabul qilganini hisobga oladi)
         return new Set(JSON.parse(data).map(String));
       } catch (jsonError) {
         console.error(
@@ -181,7 +259,6 @@ function loadUserIds() {
         return new Set();
       }
     } else {
-      // Fayl mavjud bo'lmasa, bo'sh fayl yaratish
       fs.writeFileSync(USER_IDS_FILE, "[]", "utf8");
       return new Set();
     }
@@ -203,7 +280,7 @@ function saveUserIds(userIds) {
   }
 }
 
-userIds = loadUserIds(); // Xato bergan qism tuzatildi
+userIds = loadUserIds();
 console.log(`Bot ishga tushdi. Yuklangan foydalanuvchilar: ${userIds.size}`);
 
 // ----------------------------------------------------
@@ -233,7 +310,6 @@ Menga istalgan xabarni yuboring, u ma'muriyatga uzatiladi.
 // ----------------------------------------------------
 // YORDAMCHI FUNKSIYA: E'LONNI TARQATISH
 // ----------------------------------------------------
-
 function sendBroadcastMessage(adminId, text, targetId = null) {
   const localUserIds = loadUserIds();
   const adminIdString = String(adminId).trim();
@@ -437,12 +513,12 @@ bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const userText = msg.text;
   const adminIdString = ADMIN_CHAT_ID.trim();
-  const currentChatIdString = String(chatId); // ID saqlash
+  const currentChatIdString = String(chatId); // 1. ID saqlash
 
   if (!userIds.has(currentChatIdString)) {
     userIds.add(currentChatIdString);
     saveUserIds(userIds);
-  } // Buyruqlar va /reklama buyrug'ini o'tkazib yuborish
+  } // 2. Buyruqlarni o'tkazib yuborish
 
   if (!userText || userText.startsWith("/")) {
     if (
@@ -457,94 +533,18 @@ bot.on("message", (msg) => {
       );
     }
     return;
-  } // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
-
-  if (currentChatIdString === adminIdString) {
-    ADMIN_PENDING_MESSAGE[adminIdString] = userText;
-
-    const allUsersSet = loadUserIds();
-    const allUsers = Array.from(allUsersSet).filter(
-      (id) => String(id) !== adminIdString
-    );
-    const inlineKeyboard = [];
-    let targetChatId = null; // 1. REPLY-TO tugmasini tekshirish
-
-    const repliedMessage = msg.reply_to_message;
-    if (repliedMessage && repliedMessage.text) {
-      const match = repliedMessage.text.match(/💬 \*Chat ID:\* `(\d+)`/);
-
-      if (match && match[1]) {
-        targetChatId = match[1];
-        inlineKeyboard.push([
-          {
-            text: `↩️ Faqat Shu Foydalanuvchiga Javob Berish (${targetChatId})`,
-            callback_data: `FORWARD_${targetChatId}`,
-          },
-        ]);
-      }
-    } // 2. BOSHQA FOYDALANUVCHILAR ro'yxatidan tugmalar yaratish (oxirgi 5 ta)
-
-    const recentUsers = allUsers
-      .filter((id) => String(id) !== targetChatId)
-      .slice(-5)
-      .reverse();
-
-    if (recentUsers.length > 0 && (recentUsers.length > 0 || targetChatId)) {
-      inlineKeyboard.push([
-        {
-          text: "--- YAKKA YUBORISH VARIANTLARI ---",
-          callback_data: "ignore_header_1",
-        },
-      ]);
-
-      recentUsers.forEach((userId) => {
-        inlineKeyboard.push([
-          {
-            text: `👤 Eng So'nggi Foydalanuvchi: ${userId}`,
-            callback_data: `FORWARD_${userId}`,
-          },
-        ]);
-      });
-    } // 3. "Hammasiga" tugmasi
-    inlineKeyboard.push([
-      {
-        text: "------------------------------------",
-        callback_data: "ignore_header_2",
-      },
-    ]);
-    inlineKeyboard.push([
-      {
-        text: `📢 Hammasiga E'lon Qilish (${allUsers.length} kishi)`,
-        callback_data: "FORWARD_ALL",
-      },
-    ]); // Adminga xabarni qayerga yuborishni so'rab jo'natish
-
-    const promptText = `*❓ Xabarni Qayerga Yuborish Kerak?*
-┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
-*Matn:*
-\`\`\`
-${userText.substring(0, 100)}${userText.length > 100 ? "..." : ""}
-\`\`\`
-
-Iltimos, pastdagi variantlardan birini tanlang:`;
-
-    bot.sendMessage(chatId, promptText, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: inlineKeyboard,
-      },
-    });
   }
-  // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (Adminga uzatish OR AI javob)
-  else {
-    // 1. AI Javob Bazasi orqali tekshirish - YANGI QO'SHILGAN MANTIQ
+
+  // STSENARIY B: YUBORUVCHI — ODDIY FOYDALANUVCHI (AI Javob yoki Adminga uzatish)
+  if (currentChatIdString !== adminIdString) {
+    // 2.1. AI Javob Bazasi orqali tekshirish (qisqartmalarni ham tekshiradi)
     const aiResponse = getAiResponse(userText);
     if (aiResponse) {
       bot.sendMessage(chatId, aiResponse, { parse_mode: "Markdown" });
       return; // Agar AI javob bergan bo'lsa, Adminga uzatish shart emas
     }
 
-    // 2. Agar AI javob topmasa, xabarni Adminga uzatish
+    // 2.2. Agar AI javob topmasa, xabarni Adminga uzatish
     const userName = msg.from.first_name || "Noma'lum foydalanuvchi";
     const userId = msg.from.id;
 
@@ -570,7 +570,89 @@ ${userText}
       parse_mode: "Markdown",
     });
   }
+  // STSENARIY A: YUBORUVCHI — ADMIN (E'lonni yuborishni tasdiqlash)
+  else {
+    ADMIN_PENDING_MESSAGE[adminIdString] = userText;
+
+    const allUsersSet = loadUserIds();
+    const allUsers = Array.from(allUsersSet).filter(
+      (id) => String(id) !== adminIdString
+    );
+    const inlineKeyboard = [];
+    let targetChatId = null;
+
+    const repliedMessage = msg.reply_to_message;
+    if (repliedMessage && repliedMessage.text) {
+      const match = repliedMessage.text.match(/💬 \*Chat ID:\* `(\d+)`/);
+
+      if (match && match[1]) {
+        targetChatId = match[1];
+        inlineKeyboard.push([
+          {
+            text: `↩️ Faqat Shu Foydalanuvchiga Javob Berish (${targetChatId})`,
+            callback_data: `FORWARD_${targetChatId}`,
+          },
+        ]);
+      }
+    }
+
+    const recentUsers = allUsers
+      .filter((id) => String(id) !== targetChatId)
+      .slice(-5)
+      .reverse();
+
+    if (recentUsers.length > 0 || targetChatId) {
+      inlineKeyboard.push([
+        {
+          text: "--- YAKKA YUBORISH VARIANTLARI ---",
+          callback_data: "ignore_header_1",
+        },
+      ]);
+
+      recentUsers.forEach((userId) => {
+        inlineKeyboard.push([
+          {
+            text: `👤 Eng So'nggi Foydalanuvchi: ${userId}`,
+            callback_data: `FORWARD_${userId}`,
+          },
+        ]);
+      });
+    }
+    inlineKeyboard.push([
+      {
+        text: "------------------------------------",
+        callback_data: "ignore_header_2",
+      },
+    ]);
+    inlineKeyboard.push([
+      {
+        text: `📢 Hammasiga E'lon Qilish (${allUsers.length} kishi)`,
+        callback_data: "FORWARD_ALL",
+      },
+    ]);
+
+    const promptText = `*❓ Xabarni Qayerga Yuborish Kerak?*
+┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄
+*Matn:*
+\`\`\`
+${userText.substring(0, 100)}${userText.length > 100 ? "..." : ""}
+\`\`\`
+
+Iltimos, pastdagi variantlardan birini tanlang:`;
+
+    bot.sendMessage(chatId, promptText, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: inlineKeyboard,
+      },
+    });
+  }
 });
 
 // Xatolar uchun ishlov berish
-bot.on("polling_error", (err) => console.error("Polling xatosi:", err.message));
+bot.on("polling_error", (err) => {
+  // 409 Conflict xatosini e'tiborsiz qoldirish
+  if (!err.message.includes("409 Conflict")) {
+    console.error("Polling xatosi:", err.message);
+  }
+});

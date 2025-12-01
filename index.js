@@ -1,4 +1,4 @@
-// Yagona fayl (index.js) - AI/Qisqartma funksiyalari matnning istalgan joyida ishlashi uchun tuzatildi.
+// Yagona fayl (index.js) - AI javoblari matnning istalgan qismida ishlashi uchun to'liq tuzatildi.
 
 // 1. Kerakli kutubxonalarni yuklash
 const TelegramBot = require("node-telegram-bot-api");
@@ -173,39 +173,42 @@ const AI_RESPONSES_MAPPING = {
 // ----------------------------------------------------
 
 /**
- * Matndagi eng keng tarqalgan o'zbek lotin-kirill xatolarini tuzatadi.
+ * Matndagi barcha lotin-kirill xatolarni tuzatadi va uni butunlay tozalaydi.
  * @param {string} text - Foydalanuvchi matni.
- * @returns {string} - Normalizatsiya qilingan matn.
+ * @returns {string} - Tozalangan matn.
  */
 function normalizeText(text) {
   if (!text) return "";
   let normalized = text.toLowerCase();
 
-  // Keng tarqalgan qisqartma va xatolarni tuzatish
+  // 1. Keng tarqalgan qisqartma va xatolarni tuzatish (aniqlik uchun)
   normalized = normalized
     .replace(/a\.s/g, "assalom")
     .replace(/v\.a\.s/g, "assalom")
-    .replace(/sa/g, "salom") // Sa ni salomga o'girish
-    .replace(/qale/g, "qalaysan") // Qale ni qalaysanga o'girish
-    .replace(/yordam/g, "yerdam")
+    .replace(/yerdam/g, "yordam") // Yordam so'zini to'g'irlash
 
-    // Lotin xatolari (w, x, o', g' kabi)
+    // 2. Lotin xatolari (w, x, c, o', g' kabi)
     .replace(/w/g, "sh")
     .replace(/x/g, "h")
     .replace(/c/g, "ch")
     .replace(/o'/g, "o")
     .replace(/g'/g, "g")
-    .replace(/[.,?!]/g, " "); // Tinish belgilarini bo'sh joyga almashtirish
 
-  // Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
+    // 3. Qisqa, juda mashhur qisqartmalarni to'liq so'zga almashtirish
+    .replace(/\b(sa|as)\b/g, "salom") // 'sa' ni to'liq so'z sifatida faqat salomga almashtirish
+    .replace(/\b(qale)\b/g, "qalesan") // 'qale' ni to'liq so'z sifatida qalesanga almashtirish
+
+    // 4. Barcha tinish belgilari va raqamlarni olib tashlash
+    .replace(/[^a-z' ]/g, " "); // Faqat harflar, apostrof va bo'sh joy qoladi
+
+  // 5. Matnda bir nechta bo'shliq bo'lsa, bittaga tushirish
   normalized = normalized.replace(/\s+/g, " ");
 
   return normalized.trim();
 }
 
 /**
- * AI javoblar lug'atidan mos javobni topadi.
- * ENG MUHIM TUZATISH: Endi matnning istalgan joyidagi kalit so'zga mos keladi.
+ * AI javoblar lug'atidan mos javobni topadi. Matnning istalgan qismidagi so'zni topadi.
  * @param {string} text - Foydalanuvchi yuborgan matn.
  * @returns {string | null} - Javob matni yoki null.
  */
@@ -218,12 +221,9 @@ function getAiResponse(text) {
     for (const keyword of keywords) {
       const trimmedKeyword = keyword.trim();
 
-      // To'liq so'z mosligi uchun regex
-      // Bu '\b' (so'z chegarasi) bilan ishlaydi, shuning uchun "ish" kaliti "ishlatish" ga mos kelmaydi,
-      // lekin "yaxshi ish" ga mos keladi. Bu aniqlikni oshiradi.
-      const regex = new RegExp(`\\b${trimmedKeyword}\\b`, "i");
-
-      if (regex.test(normalizedText)) {
+      // Tozalangan matn ichida, so'z chegaralariga e'tibor bermay, shunchaki o'sha keyword mavjudligini tekshiramiz.
+      // Bu "yaxshimisiz qalesan" kabi hamma holatlarda ishlashini ta'minlaydi.
+      if (normalizedText.includes(trimmedKeyword)) {
         return AI_RESPONSES_MAPPING[keywordsString];
       }
     }
